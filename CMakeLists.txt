@@ -23,6 +23,12 @@ set(HEADERS
 
 add_executable(SystInfo WIN32 ${SOURCES} ${HEADERS})
 
+target_compile_definitions(SystInfo PRIVATE 
+    UNICODE 
+    _UNICODE 
+    _WIN32_WINNT=0x0600
+)
+
 target_link_libraries(SystInfo
     PRIVATE
     pdh
@@ -38,4 +44,8 @@ if(MSVC)
     target_compile_options(SystInfo PRIVATE /W4 /WX-)
     # Optional: Linker flags for smaller binary
     set_target_properties(SystInfo PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+endif()
+
+if(MINGW)
+    target_link_options(SystInfo PRIVATE -municode)
 endif()
