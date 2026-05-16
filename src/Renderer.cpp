@@ -66,7 +66,7 @@ void Renderer::Render(const SystemMetrics& metrics) {
         m_pRenderTarget->Clear(D2D1::ColorF(0, 0));
         D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
         D2D1_ROUNDED_RECT rect = D2D1::RoundedRect(D2D1::RectF(2, 2, rtSize.width - 2, rtSize.height - 2), 8.0f, 8.0f);
-        m_pRenderTarget->FillRoundedRect(rect, m_pBackgroundBrush);
+        m_pRenderTarget->FillRoundedRectangle(rect, m_pBackgroundBrush);
         
         std::wstringstream ss;
         ss << L"CPU: " << std::fixed << std::setprecision(0) << metrics.cpuUsage << L"%  ";

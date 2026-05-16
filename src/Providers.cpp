@@ -1,5 +1,4 @@
 #include "Providers.hpp"
-#include <iphlpapi.h>
 #include <iostream>
 
 #pragma comment(lib, "pdh.lib")
@@ -15,8 +14,8 @@ SystemProviders::~SystemProviders() {
 }
 
 void SystemProviders::InitCPU() {
-    PdhOpenQuery(NULL, NULL, &m_cpuQuery);
-    PdhAddEnglishCounter(m_cpuQuery, L"\\Processor(_Total)\\% Processor Time", NULL, &m_cpuCounter);
+    PdhOpenQuery(NULL, 0, &m_cpuQuery);
+    PdhAddEnglishCounterW(m_cpuQuery, L"\\Processor(_Total)\\% Processor Time", 0, &m_cpuCounter);
     PdhCollectQueryData(m_cpuQuery);
 }
 
