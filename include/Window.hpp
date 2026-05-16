@@ -1,8 +1,6 @@
 #pragma once
-
-#include <windows.h>
-#include "Renderer.hpp"
 #include "Providers.hpp"
+#include "Renderer.hpp"
 
 class MainWindow {
 public:

@@ -1,9 +1,7 @@
 #pragma once
-
-#include <windows.h>
+#include "Providers.hpp"
 #include <d2d1.h>
 #include <dwrite.h>
-#include "Providers.hpp"
 
 class Renderer {
 public:
