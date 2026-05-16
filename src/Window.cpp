@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include <dwmapi.h>
+#include <iostream>
 
 #pragma comment(lib, "dwmapi.lib")
 
@@ -32,6 +33,7 @@ BOOL MainWindow::Create(PCWSTR lpWindowName, DWORD dwStyle, DWORD dwExStyle, int
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = ClassName();
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
 
     RegisterClass(&wc);
 
@@ -39,6 +41,9 @@ BOOL MainWindow::Create(PCWSTR lpWindowName, DWORD dwStyle, DWORD dwExStyle, int
         dwExStyle, ClassName(), lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, GetModuleHandle(NULL), this
     );
 
+    if (m_hwnd == NULL) {
+        std::cerr << "CreateWindowEx failed! Error: " << GetLastError() << std::endl;
+    }
     return (m_hwnd ? TRUE : FALSE);
 }
 

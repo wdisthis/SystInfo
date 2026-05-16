@@ -1,5 +1,6 @@
 #include "Renderer.hpp"
 #include <string>
+#include <iostream>
 #include <iomanip>
 #include <sstream>
 
@@ -61,6 +62,7 @@ void Renderer::DiscardDeviceResources() {
 }
 
 void Renderer::Render(const SystemMetrics& metrics) {
+    std::cout << "Rendering frame... CPU: " << metrics.cpuUsage << "%" << std::endl;
     if (SUCCEEDED(CreateDeviceResources())) {
         m_pRenderTarget->BeginDraw();
         m_pRenderTarget->Clear(D2D1::ColorF(0, 0));
