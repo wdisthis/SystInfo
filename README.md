@@ -1,23 +1,22 @@
 # SystInfo - Custom Taskbar Widget
 
-SystInfo is a light weight, high-performance C++ application designed to provide real-time system monitoring directly on your Windows 10 taskbar. It offers a clean, non-intrusive way to track your PC's health without opening heavy applications like Task Manager.
-
+SystInfo is a lightweight, high-performance C++ application designed to provide real-time system monitoring directly on your Windows taskbar. It offers a clean, non-intrusive way to track your PC's health without opening heavy applications like Task Manager.
 
 ## Tech Stack
 | Component | Technology |
 | :--- | :--- |
-| Language | C++17 |
-| Graphics | Direct2D (Hardware accelerated) |
-| UI Framework | Win32 API (Native Windows) |
-| Build System | CMake 3.15+ |
+| **Language** | C++17 |
+| **Graphics** | Direct2D (Hardware accelerated) |
+| **UI Framework** | Win32 API (Native Windows) |
+| **Build System** | CMake 3.15+ |
 
 ## Features
 | Feature | Description | Metric Source |
 | :--- | :--- | :--- |
-| CPU Monitor | Real-time percentage usage | PDH (Performance Data Helper) |
-| RAM Monitor | Memory usage percentage | GlobalMemoryStatusEx |
-| Network Speed | Upload (↑) and Download (↓) speeds in MB/s | IP Helper API |
-| Disk Usage | Free space for C: and D: drives (English) | GetDiskFreeSpaceExW |
+| **CPU Monitor** | Real-time percentage usage | PDH (Performance Data Helper) |
+| **RAM Monitor** | Memory usage percentage | GlobalMemoryStatusEx |
+| **Network Speed** | Upload (↑) and Download (↓) speeds in MB/s | IP Helper API (GetIfTable2) |
+| **Disk Usage** | Free space for C: and D: drives | GetDiskFreeSpaceExW |
 
 ## Project Structure
 ```text
@@ -29,31 +28,39 @@ SystInfo/
 ├── src/                  # Source files (.cpp)
 │   ├── main.cpp          # Entry point & Message loop
 │   ├── Providers.cpp     # Metric implementations
-│   └── Renderer.cpp      # UI implementation
-├── README.md             # This file
+│   ├── Renderer.cpp      # UI implementation
+│   └── Window.cpp        # Window event handling
+├── README.md             # Project documentation
 └── CMakeLists.txt        # Build configuration
 ```
 
 ## Requirements
-- OS: Windows 10 (Optimized)
-- Compiler: MSVC (Visual Studio 2019 or 2022 recommended)
-- Build Tool: CMake 3.15+
+- **OS**: Windows 10 or 11
+- **Compiler**: MSVC (Visual Studio 2019+) or MinGW-w64 (MSYS2)
+- **Build Tool**: CMake 3.15+
 
-## How to Run
-1. **Clone & Open**: Open the project folder in Visual Studio or your favorite C++ IDE.
-2. **Build**: 
-   - Using CMake: 
-     ```bash
-     mkdir build
-     cd build
-     cmake ..
-     cmake --build . --config Release
-     ```
-3. **Launch**: Run `SystInfo.exe`.
-4. **Usage**: The widget will automatically appear above your taskbar. It is borderless and follows your taskbar's background theme.
+## How to Build
+
+### Using MSYS2 (MinGW)
+Run the following in your MinGW64 terminal:
+```bash
+mkdir build
+cd build
+cmake .. -G "MinGW Makefiles"
+cmake --build .
+```
+
+### Using Visual Studio
+1. Open the project folder in Visual Studio.
+2. CMake will automatically detect the configuration.
+3. Select `Release` and click **Build > Build All**.
+
+## Usage
+1. Run `SystInfo.exe`.
+2. The widget will appear at the bottom right, above the taskbar.
+3. It is borderless and features a translucent dark background for a premium look.
 
 ## Important Notes
-- **Admin Rights**: Some network metrics might require administrative privileges depending on your Windows security settings.
-- **Overlay Position**: The widget is programmed to auto-detect your taskbar's location. If you move your taskbar, the widget will re-align itself on the next refresh.
 - **Resource Usage**: Designed to consume <10MB RAM and <0.5% CPU.
-- **No GPU Monitoring**: This version explicitly excludes GPU monitoring to minimize library dependencies.
+- **Admin Rights**: Network metrics might require administrative privileges in some environments.
+- **Overlay Position**: Positioned relative to the primary monitor's resolution.
