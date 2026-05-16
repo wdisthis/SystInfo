@@ -21,7 +21,7 @@ set(HEADERS
     include/Window.hpp
 )
 
-add_executable(SystInfo WIN32 ${SOURCES} ${HEADERS})
+add_executable(SystInfo ${SOURCES} ${HEADERS})
 
 target_compile_definitions(SystInfo PRIVATE 
     UNICODE 
@@ -47,5 +47,5 @@ if(MSVC)
 endif()
 
 if(MINGW)
-    target_link_options(SystInfo PRIVATE -municode)
+    target_link_options(SystInfo PRIVATE -municode -static-libgcc -static-libstdc++)
 endif()
