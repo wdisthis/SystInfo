@@ -4,19 +4,62 @@
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
 
+#ifndef PDH_CSTATUS_VALID_DATA
+#define PDH_CSTATUS_VALID_DATA ((DWORD)0x00000000L)
+#endif
+#ifndef PDH_CSTATUS_NEW_DATA
+#define PDH_CSTATUS_NEW_DATA ((DWORD)0x00000001L)
+#endif
+
+static unsigned long long FileTimeToInt64(const FILETIME& ft) {
+    ULARGE_INTEGER uli;
+    uli.LowPart = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+    return uli.QuadPart;
+}
+
 SystemProviders::SystemProviders() {
     InitCPU();
     InitNetwork();
 }
 
 SystemProviders::~SystemProviders() {
-    if (m_cpuQuery) PdhCloseQuery(m_cpuQuery);
+    if (m_cpuQuery) {
+        PdhCloseQuery(m_cpuQuery);
+    }
 }
 
 void SystemProviders::InitCPU() {
-    PdhOpenQuery(NULL, 0, &m_cpuQuery);
-    PdhAddEnglishCounterW(m_cpuQuery, L"\\Processor(_Total)\\% Processor Time", 0, &m_cpuCounter);
-    PdhCollectQueryData(m_cpuQuery);
+    // 1. Try to initialize PDH for "% Processor Utility" (which matches modern Task Manager)
+    if (PdhOpenQuery(NULL, 0, &m_cpuQuery) == ERROR_SUCCESS) {
+        // Try adding the modern Processor Utility counter first
+        PDH_STATUS status = PdhAddEnglishCounterW(m_cpuQuery, L"\\Processor Information(_Total)\\% Processor Utility", 0, &m_cpuCounter);
+        
+        // If modern counter is not available, fallback to traditional Processor Time counter
+        if (status != ERROR_SUCCESS) {
+            status = PdhAddEnglishCounterW(m_cpuQuery, L"\\Processor(_Total)\\% Processor Time", 0, &m_cpuCounter);
+        }
+        
+        if (status == ERROR_SUCCESS) {
+            PdhCollectQueryData(m_cpuQuery);
+            m_pdhAvailable = true;
+        } else {
+            PdhCloseQuery(m_cpuQuery);
+            m_cpuQuery = nullptr;
+            m_pdhAvailable = false;
+        }
+    } else {
+        m_cpuQuery = nullptr;
+        m_pdhAvailable = false;
+    }
+
+    // 2. Always initialize GetSystemTimes as a reliable backup
+    FILETIME idleTime, kernelTime, userTime;
+    if (GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
+        m_lastIdleTime = FileTimeToInt64(idleTime);
+        m_lastKernelTime = FileTimeToInt64(kernelTime);
+        m_lastUserTime = FileTimeToInt64(userTime);
+    }
 }
 
 void SystemProviders::InitNetwork() {
@@ -32,10 +75,63 @@ void SystemProviders::Update() {
 }
 
 float SystemProviders::GetCPUUsage() {
-    PDH_FMT_COUNTERVALUE counterValue;
-    PdhCollectQueryData(m_cpuQuery);
-    PdhGetFormattedCounterValue(m_cpuCounter, PDH_FMT_DOUBLE, NULL, &counterValue);
-    return (float)counterValue.doubleValue;
+    float usage = 0.0f;
+    bool usageAcquired = false;
+
+    // Try PDH first (highly accurate, matches Task Manager)
+    if (m_pdhAvailable && m_cpuQuery && m_cpuCounter) {
+        PDH_STATUS status = PdhCollectQueryData(m_cpuQuery);
+        if (status == ERROR_SUCCESS) {
+            PDH_FMT_COUNTERVALUE counterValue;
+            status = PdhGetFormattedCounterValue(m_cpuCounter, PDH_FMT_DOUBLE, NULL, &counterValue);
+            if (status == ERROR_SUCCESS && (counterValue.CStatus == PDH_CSTATUS_VALID_DATA || counterValue.CStatus == PDH_CSTATUS_NEW_DATA)) {
+                usage = (float)counterValue.doubleValue;
+                usageAcquired = true;
+            }
+        }
+    }
+
+    // Fallback to GetSystemTimes if PDH is not available or failed
+    if (!usageAcquired) {
+        FILETIME idleTime, kernelTime, userTime;
+        if (GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
+            unsigned long long currentIdle = FileTimeToInt64(idleTime);
+            unsigned long long currentKernel = FileTimeToInt64(kernelTime);
+            unsigned long long currentUser = FileTimeToInt64(userTime);
+
+            if (m_lastIdleTime > 0 || m_lastKernelTime > 0 || m_lastUserTime > 0) {
+                unsigned long long idleDiff = currentIdle - m_lastIdleTime;
+                unsigned long long kernelDiff = currentKernel - m_lastKernelTime;
+                unsigned long long userDiff = currentUser - m_lastUserTime;
+
+                unsigned long long busyTime = 0;
+                unsigned long long totalTime = 0;
+
+                // Auto-detect if KernelTime includes IdleTime
+                if (kernelDiff >= idleDiff) {
+                    busyTime = (kernelDiff - idleDiff) + userDiff;
+                    totalTime = kernelDiff + userDiff;
+                } else {
+                    busyTime = kernelDiff + userDiff;
+                    totalTime = kernelDiff + userDiff + idleDiff;
+                }
+
+                if (totalTime > 0) {
+                    usage = (float)((double)busyTime * 100.0 / totalTime);
+                    usageAcquired = true;
+                }
+            }
+
+            m_lastIdleTime = currentIdle;
+            m_lastKernelTime = currentKernel;
+            m_lastUserTime = currentUser;
+        }
+    }
+
+    if (usage < 0.0f) usage = 0.0f;
+    if (usage > 100.0f) usage = 100.0f;
+
+    return usage;
 }
 
 void SystemProviders::UpdateRAM() {

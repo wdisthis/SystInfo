@@ -13,7 +13,7 @@ SystInfo is a lightweight, high-performance C++ application designed to provide 
 ## Features
 | Feature | Description | Metric Source |
 | :--- | :--- | :--- |
-| **CPU Monitor** | Real-time percentage usage | PDH (Performance Data Helper) |
+| **CPU Monitor** | Real-time percentage usage | GetSystemTimes (Native Windows API) |
 | **RAM Monitor** | Memory usage percentage | GlobalMemoryStatusEx |
 | **Network Speed** | Upload (↑) and Download (↓) speeds in MB/s | IP Helper API (GetIfTable2) |
 | **Disk Usage** | Free space for C: and D: drives | GetDiskFreeSpaceExW |

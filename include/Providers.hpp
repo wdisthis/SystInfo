@@ -43,8 +43,13 @@ private:
 
     SystemMetrics m_metrics;
 
-    PDH_HQUERY m_cpuQuery;
-    PDH_HCOUNTER m_cpuCounter;
+    unsigned long long m_lastIdleTime = 0;
+    unsigned long long m_lastKernelTime = 0;
+    unsigned long long m_lastUserTime = 0;
+
+    bool m_pdhAvailable = false;
+    PDH_HQUERY m_cpuQuery = nullptr;
+    PDH_HCOUNTER m_cpuCounter = nullptr;
 
     unsigned long long m_lastInBytes = 0;
     unsigned long long m_lastOutBytes = 0;
